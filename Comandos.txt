@@ -1,0 +1,5 @@
+.\venv_optica_web\Scripts\activate
+
+py manage.py runserver
+
+Tarea siguiente

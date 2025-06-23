@@ -1,0 +1,90 @@
+Lista de Preparación y Configuración para una Nueva PC
+
+0. Antes de moverte a la nueva PC (En tu PC actual):
+
+    Guarda todos tus cambios: Asegúrate de que todos los archivos de tu proyecto estén guardados y que no tengas cambios pendientes sin guardar.
+    Genera el archivo requirements.txt: Este archivo lista todas las librerías de Python que tu proyecto necesita. Es crucial para que la nueva PC instale exactamente las mismas versiones.
+        Abre tu terminal en el directorio raíz de tu proyecto (C:\Users\salv_\OneDrive\Escritorio\SistemaOpticaWeb).
+        Activa tu entorno virtual: venv_optica_web\Scripts\activate (o el comando que uses para activar tu entorno).
+        Ejecuta: pip freeze > requirements.txt
+            Esto creará un archivo llamado requirements.txt en el directorio raíz de tu proyecto.
+    Copia toda la carpeta de tu proyecto: Asegúrate de copiar toda la carpeta SistemaOpticaWeb a la nueva PC. Esto incluye:
+        La carpeta venv_optica_web (tu entorno virtual).
+        Los archivos de tu proyecto Django (optica_web, clientes, productos, etc.).
+        El archivo manage.py.
+        ¡El archivo optica.db! Este es tu base de datos actual con todos tus clientes y productos. Asegúrate de copiarlo.
+        El nuevo archivo requirements.txt.
+
+1. En la Nueva PC: Instalaciones Previas
+
+    Python:
+        Asegúrate de que la nueva PC tenga Python 3.10 o superior instalado (idealmente la misma versión que usas ahora, por ejemplo, Python 3.12.10).
+        Descárgalo de la página oficial: python.org
+        Importante: Durante la instalación, asegúrate de marcar la opción "Add Python to PATH" o "Add Python to environment variables" (o similar).
+
+    Visual Studio Code (Opcional, pero recomendado):
+        Si usas VS Code para desarrollar, instálalo en la nueva PC.
+        Descárgalo de: code.visualstudio.com
+        Considera instalar las extensiones de Python y Django en VS Code.
+
+2. En la Nueva PC: Configuración del Proyecto
+
+    Copia la Carpeta del Proyecto: Pega la carpeta completa SistemaOpticaWeb que copiaste de tu PC anterior en la ubicación deseada de la nueva PC (por ejemplo, en el escritorio o en C:\Proyectos\SistemaOpticaWeb).
+
+    Abre la Terminal/Símbolo del Sistema:
+        Navega hasta la carpeta raíz de tu proyecto en la nueva PC.
+        Ejemplo: cd C:\Users\TuUsuario\Escritorio\SistemaOpticaWeb
+
+    Crea y Activa el Entorno Virtual (Recomendado RECREARLO):
+        Aunque copiaste la carpeta venv_optica_web, a veces es mejor recrear el entorno virtual en la nueva máquina para evitar problemas de rutas o dependencias específicas del sistema operativo.
+        Primero, borra la carpeta venv_optica_web que copiaste de la PC anterior. (Si no la borraste en el paso 0, este es el momento).
+        Luego, crea uno nuevo:
+        Bash
+
+python -m venv venv_optica_web
+
+Actívalo:
+Bash
+
+    venv_optica_web\Scripts\activate
+
+    (Si estás en Linux/macOS sería source venv_optica_web/bin/activate)
+
+Instala las Dependencias del Proyecto:
+
+    Una vez activado el entorno virtual, instala todas las librerías listadas en tu requirements.txt:
+    Bash
+
+    pip install -r requirements.txt
+
+    Esto instalará Django, Bootstrap, y cualquier otra librería que hayas añadido (aunque por ahora solo hemos usado Django y Bootstrap a través del CDN).
+
+Verifica las Migraciones (Si copiaste optica.db):
+
+    Si copiaste el archivo optica.db desde la PC anterior junto con el resto del proyecto, no necesitas ejecutar makemigrations o migrate a menos que hayas hecho cambios en los modelos después de la copia.
+    Si por alguna razón no copiaste optica.db o quieres empezar con una base de datos nueva, puedes ejecutar:
+    Bash
+
+    py manage.py migrate
+    py manage.py createsuperuser
+
+    (Esto creará una base de datos vacía y te pedirá crear un nuevo usuario administrador. Perderías los datos previos si no copiaste optica.db).
+
+Ejecuta el Servidor de Desarrollo:
+
+    Una vez que todo esté instalado y configurado, puedes iniciar tu proyecto:
+    Bash
+
+        py manage.py runserver
+
+        Deberías ver el mensaje "Starting development server at http://127.0.0.1:8000/" y podrás acceder a tu aplicación desde el navegador.
+
+Resumen de Comandos Clave (en el directorio de tu proyecto, con el entorno virtual activo):
+
+    (En PC Anterior): pip freeze > requirements.txt (y copia toda la carpeta del proyecto)
+    (En Nueva PC): python -m venv venv_optica_web
+    (En Nueva PC): venv_optica_web\Scripts\activate
+    (En Nueva PC): pip install -r requirements.txt
+    (En Nueva PC): py manage.py runserver
+
+¡Con estos pasos, tendrás tu proyecto funcionando en la nueva PC! Si tienes alguna duda en un paso específico, no dudes en preguntar.

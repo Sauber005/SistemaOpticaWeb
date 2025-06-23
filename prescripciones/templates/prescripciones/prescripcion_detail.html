@@ -1,0 +1,69 @@
+{# prescripciones/templates/prescripciones/prescripcion_detail.html (CORREGIDO) #}
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Prescripción{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Detalle de Prescripción #{{ prescripcion.pk }}</h2>
+            <div>
+                <a href="{% url 'prescripciones:prescripcion_update' prescripcion.pk %}" class="btn btn-warning me-2" title="Editar Prescripción">
+                    <i class="fas fa-edit"></i> Editar Prescripción
+                </a>
+                <a href="{% url 'prescripciones:prescripcion_delete' prescripcion.pk %}" class="btn btn-danger" title="Eliminar Prescripción">
+                    <i class="fas fa-trash-alt"></i> Eliminar Prescripción
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <p><strong>Cliente:</strong>
+                <a href="{% url 'cliente_detail' prescripcion.cliente.pk %}">
+                    {{ prescripcion.cliente.get_full_name }}
+                </a>
+            </p>
+            <p><strong>Fecha de Prescripción:</strong> {{ prescripcion.fecha_prescripcion|date:"d F Y" }}</p>
+            
+            <hr>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Ojo Derecho (OD)</h4>
+                    {# --- CAMBIO AQUÍ --- #}
+                    <p><strong>Esfera:</strong> {{ prescripcion.formatted_esfera_od }}</p>
+                    <p><strong>Cilindro:</strong> {{ prescripcion.cilindro_od|default:"-" }}</p>
+                    <p><strong>Eje:</strong> {{ prescripcion.eje_od|default:"-" }}°</p>
+                    <p><strong>DNP OD:</strong> {{ prescripcion.dnp_od|default:"-" }} mm</p>
+                    {# --- Y AQUÍ --- #}
+                    <p><strong>Adición:</strong> {{ prescripcion.formatted_adicion_od }}</p>
+                    <p><strong>Prisma:</strong> {{ prescripcion.prisma_od|default:"-" }}</p>
+                    <p><strong>Base:</strong> {{ prescripcion.base_od|default:"-" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h4>Ojo Izquierdo (OI)</h4>
+                    {# --- CAMBIO AQUÍ --- #}
+                    <p><strong>Esfera:</strong> {{ prescripcion.formatted_esfera_oi }}</p>
+                    <p><strong>Cilindro:</strong> {{ prescripcion.cilindro_oi|default:"-" }}</p>
+                    <p><strong>Eje:</strong> {{ prescripcion.eje_oi|default:"-" }}°</p>
+                    <p><strong>DNP OI:</strong> {{ prescripcion.dnp_oi|default:"-" }} mm</p>
+                    {# --- Y AQUÍ --- #}
+                    <p><strong>Adición:</strong> {{ prescripcion.formatted_adicion_oi }}</p>
+                    <p><strong>Prisma:</strong> {{ prescripcion.prisma_oi|default:"-" }}</p>
+                    <p><strong>Base:</strong> {{ prescripcion.base_oi|default:"-" }}</p>
+                </div>
+            </div>
+
+            <hr>
+
+            <p><strong>Observaciones:</strong> {{ prescripcion.observaciones|default:"Ninguna" }}</p>
+            
+            <div class="mt-4">
+                <a href="{% url 'prescripciones:prescripcion_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver a la Lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

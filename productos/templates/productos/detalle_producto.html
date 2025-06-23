@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Producto | Sistema Óptica{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Detalle de Producto: {{ producto.nombre }}</h2>
+            <div>
+                <a href="{% url 'productos:editar_producto' producto.pk %}" class="btn btn-warning btn-sm me-2" title="Editar Producto" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="{% url 'eliminar_producto' producto.pk %}" class="btn btn-danger btn-sm" title="Eliminar Producto" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <i class="fas fa-trash-alt"></i> Eliminar
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <p><strong>ID:</strong> {{ producto.pk }}</p>
+            <p><strong>Nombre:</strong> {{ producto.nombre }}</p>
+            <p><strong>Marca:</strong> {{ producto.marca|default:"N/A" }}</p>
+            <p><strong>Tipo:</strong> {{ producto.get_tipo_display }}</p>
+            <p><strong>Código de Barras:</strong> {{ producto.codigo_barras|default:"N/A" }}</p>
+            <p><strong>Descripción:</strong> {{ producto.descripcion|default:"N/A" }}</p>
+            <p><strong>Precio de Compra:</strong> ${{ producto.precio_compra|floatformat:2|default:"N/A" }}</p>
+            <p><strong>Precio de Venta:</strong> ${{ producto.precio_venta|floatformat:2 }}</p>
+            <p><strong>Stock:</strong> {{ producto.stock }}</p>
+            <p><strong>Activo:</strong> {% if producto.activo %}Sí{% else %}No{% endif %}</p>
+            <p><strong>Fecha de Ingreso:</strong> {{ producto.fecha_ingreso|date:"d M Y H:i" }}</p>
+            <p><strong>Última Actualización:</strong> {{ producto.ultima_actualizacion|date:"d M Y H:i" }}</p>
+            
+            <div class="mt-4">
+                <a href="{% url 'productos:lista_productos' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver a la Lista de Productos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

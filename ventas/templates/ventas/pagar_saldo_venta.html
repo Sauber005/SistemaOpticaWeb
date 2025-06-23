@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ titulo|default:"Pagar Saldo" }}{% endblock %}
+
+{% block content %}
+{# Contenedor para las notificaciones Toast de Bootstrap #}
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="toast-title">Notificación</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-body">
+            Mensaje.
+        </div>
+    </div>
+</div>
+
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h2 class="mb-0">{{ titulo }}</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>Saldo Pendiente Actual:</strong> <span class="fw-bold">${{ venta.saldo_pendiente|floatformat:2 }}</span></p>
+                    <hr>
+                    
+                    {# Le damos un ID al formulario para que JavaScript lo encuentre #}
+                    <form method="post" id="pago-form">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{% url 'ventas:detalle_venta' venta.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle"></i> Realizar Pago
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pagoForm = document.getElementById('pago-form');
+    const toastElement = document.getElementById('liveToast');
+    const toastTitle = document.getElementById('toast-title');
+    const toastBody = document.getElementById('toast-body');
+    const bsToast = new bootstrap.Toast(toastElement);
+
+    pagoForm.addEventListener('submit', function(event) {
+        // 1. Prevenir el envío normal del formulario (que recarga la página)
+        event.preventDefault();
+
+        const formData = new FormData(pagoForm);
+        
+        // 2. Enviar los datos con AJAX usando Fetch
+        fetch(pagoForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                // Este encabezado le dice a Django que es una petición AJAX
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => response.json()) // Convertir la respuesta del servidor a JSON
+        .then(data => {
+            // 3. Procesar la respuesta JSON
+            if (data.success) {
+                // Si todo salió bien
+                toastTitle.textContent = 'Éxito';
+                toastBody.textContent = data.message;
+                toastElement.classList.remove('bg-danger');
+                toastElement.classList.add('bg-success', 'text-white');
+                bsToast.show();
+
+                // Redirigir al detalle de la venta después de 2 segundos
+                setTimeout(function() {
+                    window.location.href = "{% url 'ventas:detalle_venta' venta.pk %}";
+                }, 2000);
+
+            } else {
+                // Si hubo un error de validación
+                toastTitle.textContent = 'Error';
+                toastBody.textContent = data.error || 'Por favor, corrige los errores.';
+                toastElement.classList.remove('bg-success');
+                toastElement.classList.add('bg-danger', 'text-white');
+                bsToast.show();
+                // Aquí podrías añadir lógica para mostrar los errores específicos del formulario
+            }
+        })
+        .catch(error => {
+            console.error('Error en la petición AJAX:', error);
+            toastTitle.textContent = 'Error de Conexión';
+            toastBody.textContent = 'No se pudo comunicar con el servidor.';
+            toastElement.classList.add('bg-danger', 'text-white');
+            bsToast.show();
+        });
+    });
+});
+</script>
+{% endblock extra_js %}

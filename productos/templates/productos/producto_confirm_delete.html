@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Eliminación de Producto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h2 class="mb-0">Confirmar Eliminación de Producto</h2>
+        </div>
+        <div class="card-body">
+            <p class="lead">¿Estás seguro de que quieres eliminar el producto <strong>"{{ producto.nombre }}"</strong> (ID: {{ producto.pk }})?</p>
+            <p class="text-danger">¡Esta acción es irreversible y afectará cualquier registro de venta asociado si no tienes una lógica para manejar productos eliminados!</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger me-2">
+                    <i class="fas fa-trash-alt"></i> Sí, Eliminar
+                </button>
+                <a href="{% url 'detalle_producto' producto.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-times-circle"></i> Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

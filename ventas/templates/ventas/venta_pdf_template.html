@@ -1,0 +1,141 @@
+{# ventas/templates/ventas/venta_pdf_template.html #}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprobante de Venta #{{ venta.pk }}</title>
+    <style>
+        /* Estilos CSS específicos para la impresión del PDF */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20mm; /* Márgenes para el documento */
+            font-size: 10pt;
+        }
+        h1, h2, h3 {
+            color: #333;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .total-row td {
+            font-weight: bold;
+            background-color: #e6e6e6;
+        }
+        .info-section {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .info-section p {
+            margin: 5px 0;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .header, .footer {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 30px;
+            font-size: 9pt;
+            color: #555;
+        }
+        .footer {
+            position: running(footer); /* Para que aparezca en todas las páginas */
+        }
+        @page {
+            @bottom-center {
+                content: element(footer);
+            }
+        }
+    </style>
+    {# Si tienes un archivo CSS externo para PDFs, puedes enlazarlo aquí: #}
+    {# <link rel="stylesheet" href="{% static 'css/pdf_styles.css' %}"> #}
+</head>
+<body>
+    <div class="header">
+        <h1>Mi Óptica</h1>
+        <p>Dirección: Calle Falsa 123, Ciudad, País</p>
+        <p>Teléfono: (123) 456-7890 | Email: info@mioptica.com</p>
+    </div>
+
+    <hr>
+
+    <h2>COMPROBANTE DE VENTA #{{ venta.pk }}</h2>
+
+    <div class="info-section">
+        <h3>Detalles de la Venta</h3>
+        <p><strong>Fecha y Hora:</strong> {{ venta.fecha_venta|date:"d F Y, H:i" }}</p>
+        <p>
+            <strong>Cliente:</strong>
+            {% if venta.cliente %}{{ venta.cliente.get_full_name }}{% else %}Cliente General{% endif %}
+        </p>
+        <p><strong>Método de Pago:</strong> {{ venta.metodo_pago|default:"N/A" }}</p>
+        {% if venta.observaciones %}
+            <p><strong>Observaciones:</strong> {{ venta.observaciones }}</p>
+        {% endif %}
+    </div>
+
+    <h3>Productos Vendidos</h3>
+    {% if venta.detalles.all %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-right">Cantidad</th>
+                    <th class="text-right">Precio Unitario</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in venta.detalles.all %}
+                <tr>
+                    <td>{{ detalle.producto.nombre }}</td>
+                    <td class="text-right">{{ detalle.cantidad }}</td>
+                    <td class="text-right">${{ detalle.precio_unitario|floatformat:2 }}</td>
+                    <td class="text-right">${{ detalle.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="3" class="text-right">Total de la Venta:</td>
+                    <td class="text-right">${{ venta.total_venta|floatformat:2 }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="3" class="text-right">Monto Pagado:</td>
+                    <td class="text-right">${{ venta.pagado|floatformat:2 }}</td>
+                </tr>
+                 <tr class="total-row">
+                    <td colspan="3" class="text-right">Cambio:</td>
+                    <td class="text-right">${{ venta.cambio|floatformat:2 }}</td>
+                </tr>
+                {# ¡Línea de Saldo Pendiente de vuelta! #}
+                <tr class="total-row">
+                    <td colspan="3" class="text-right">Saldo Pendiente:</td>
+                    <td class="text-right">${{ venta.saldo_pendiente|floatformat:2 }}</td>
+                </tr>
+                {# La línea de "Estado de Pago" (Pagada/Pendiente) se mantiene eliminada #}
+            </tfoot>
+        </table>
+    {% else %}
+        <p>Esta venta no tiene productos asociados.</p>
+    {% endif %}
+
+    <div class="footer">
+        Gracias por su compra.
+    </div>
+</body>
+</html>

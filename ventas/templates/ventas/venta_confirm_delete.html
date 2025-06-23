@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Venta #{{ venta.pk }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>Confirmar Eliminación de Venta</h2>
+        </div>
+        <div class="card-body">
+            <p class="alert alert-danger">
+                ¿Estás seguro de que deseas eliminar la venta #<strong>{{ venta.pk }}</strong>
+                realizada el <strong>{{ venta.fecha_venta|date:"d F Y H:i" }}</strong>
+                al cliente <strong>{% if venta.cliente %}{{ venta.cliente.get_full_name }}{% else %}Cliente Eliminado{% endif %}</strong>?
+                Esta acción es irreversible y eliminará también todos los productos asociados a esta venta.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'ventas:detalle_venta' venta.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Confirmar Eliminación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

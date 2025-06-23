@@ -1,0 +1,500 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+{# Contenedor para las notificaciones Toast de Bootstrap #}
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="toast-title">Notificación</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-body">
+            Mensaje.
+        </div>
+    </div>
+</div>
+
+{# Modal para Añadir Nuevo Cliente #}
+<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClientModalLabel">Agregar Nuevo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-client-form" method="post" action="{% url 'ventas:crear_cliente_en_venta' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {# Renderiza el formulario de cliente aquí con crispy_forms #}
+                    {{ form_cliente_modal|crispy }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h2 class="mb-0">{{ titulo }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" id="venta-form">
+                {% csrf_token %}
+                
+                {% if form_venta.non_field_errors or formset.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form_venta.non_field_errors }}
+                    {{ formset.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div class="row mb-3">
+                    <div class="col-md-7">
+                        <div class="d-flex align-items-end">
+                            <div class="flex-grow-1 me-2">
+                                {{ form_venta.cliente|as_crispy_field }}
+                            </div>
+                            <div class="mb-3"> {# Añadido mb-3 para alinear con el campo #}
+                                <button type="button" class="btn btn-info" id="btn-add-new-client" data-bs-toggle="modal" data-bs-target="#addClientModal" title="Agregar Nuevo Cliente">
+                                    <i class="fas fa-user-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5 d-flex align-items-end justify-content-end">
+                        <div class="form-check form-switch mb-3"> {# Añadido mb-3 para alinear #}
+                            <input class="form-check-input" type="checkbox" id="es_venta_mostrador_checkbox" name="es_venta_mostrador_checkbox">
+                            <label class="form-check-label" for="es_venta_mostrador_checkbox">Venta de Mostrador</label>
+                            {{ form_venta.es_venta_mostrador }} {# Este es el campo oculto #}
+                        </div>
+                    </div>
+                </div>
+                <hr>
+
+                <h4>Detalles de la Venta</h4>
+                <div id="formset-container">
+                    {{ formset.management_form }}
+                    {% for form in formset %}
+                        <div class="row gx-2 mb-2 align-items-center formset-row">
+                            <div class="col-md-5">{{ form.producto|as_crispy_field }}</div>
+                            <div class="col-md-2">{{ form.cantidad|as_crispy_field }}</div>
+                            <div class="col-md-2">{{ form.precio_unitario|as_crispy_field }}</div>
+                            <div class="col-md-2">
+                                <label class="form-label">Subtotal</label>
+                                <input type="text" class="form-control subtotal-display" readonly value="$0.00">
+                            </div>
+                            <div class="col-md-1 align-self-center text-center pt-3">
+                                <div class="form-check" style="display:none;">{{ form.DELETE }}</div>
+                                <button type="button" class="btn btn-danger btn-sm remove-row" title="Eliminar Fila"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                            {{ form.id }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-item" class="btn btn-info btn-sm mt-2"><i class="fas fa-plus"></i> Añadir Producto</button>
+                <hr>
+
+                <h4>Detalles Finales y Pago</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_venta.metodo_pago|as_crispy_field }}
+                        {{ form_venta.observaciones|as_crispy_field }}
+                    </div>
+            
+                    <div class="col-md-6">
+                        <div class="card bg-light p-3">
+                            <div class="row g-3">
+                                <div class="col-12">{{ form_venta.total_venta|as_crispy_field }}</div>
+                                <div class="col-12">{{ form_venta.pagado|as_crispy_field }}</div>
+                                <div class="col-12">{{ form_venta.cambio|as_crispy_field }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-success btn-lg" id="btn-guardar"><i class="fas fa-save"></i> Guardar Venta</button>
+                    <button type="submit" class="btn btn-primary btn-lg ms-2" id="btn-guardar-imprimir" name="submit_and_print" value="true">
+                        <i class="fas fa-print"></i> Realizar Venta e Imprimir
+                    </button>
+                    <a href="{% url 'ventas:lista_ventas' %}" class="btn btn-secondary btn-lg ms-2"><i class="fas fa-times-circle"></i> Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="empty-form-template" style="display: none;">
+    <div class="row gx-2 mb-2 align-items-center formset-row">
+        <div class="col-md-5">{{ formset.empty_form.producto|as_crispy_field }}</div>
+        <div class="col-md-2">{{ formset.empty_form.cantidad|as_crispy_field }}</div>
+        <div class="col-md-2">{{ formset.empty_form.precio_unitario|as_crispy_field }}</div>
+        <div class="col-md-2"><label class="form-label">Subtotal</label><input type="text" class="form-control subtotal-display" readonly value="$0.00"></div>
+        <div class="col-md-1 align-self-center text-center pt-3"><button type="button" class="btn btn-danger btn-sm remove-row" title="Eliminar Fila"><i class="fas fa-trash-alt"></i></button></div>
+        {{ formset.empty_form.id }}
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    const $clienteSelect = $('#id_cliente');
+    const $ventaForm = $('#venta-form');
+    const $esVentaMostradorCheckbox = $('#es_venta_mostrador_checkbox');
+    const $esVentaMostradorHiddenInput = $('#id_es_venta_mostrador');
+    const $addClientModal = $('#addClientModal');
+    const $addClientForm = $('#add-client-form');
+    const bsToast = new bootstrap.Toast(document.getElementById('liveToast'));
+    const $toastTitle = $('#toast-title');
+    const $toastBody = $('#toast-body');
+    const $toastElement = $('#liveToast');
+
+    // Función para aplicar la máscara de teléfono: XXX-XXXXXXX
+    function applyPhoneMask(inputElement) {
+        let lastValue = '';
+        $(inputElement).on('input', function(e) {
+            let value = $(this).val().replace(/\D/g, ''); // Eliminar todo lo que no sea dígito
+            let newValue = '';
+
+            // Formato XXX-XXXXXXX (3 dígitos, guion, 7 dígitos)
+            if (value.length > 0) {
+                newValue += value.substring(0, 3); // Primeros 3 dígitos
+            }
+            if (value.length > 3) {
+                newValue += '-' + value.substring(3, 10); // Guion y los siguientes 7 dígitos
+            }
+            
+            // Asegurarse de que el cursor se mantenga al final si se añade un guion
+            const currentCaret = this.selectionStart;
+            $(this).val(newValue);
+
+            // Ajustar la posición del cursor si el guion fue insertado
+            if (newValue.length > lastValue.length && newValue.length === 4) { // Si se insertó el guion después de los 3 dígitos
+                 this.selectionStart = this.selectionEnd = currentCaret + 1;
+            } else {
+                this.selectionStart = this.selectionEnd = currentCaret;
+            }
+            lastValue = newValue;
+        });
+
+        // Al cargar el modal, si ya hay un valor (ej. en caso de error de validación), aplicarle la máscara
+        if ($(inputElement).val()) {
+            let initialValue = $(inputElement).val().replace(/\D/g, '');
+            let formattedInitialValue = '';
+            if (initialValue.length > 0) {
+                formattedInitialValue += initialValue.substring(0, 3);
+            }
+            if (initialValue.length > 3) {
+                formattedInitialValue += '-' + initialValue.substring(3, 10);
+            }
+            $(inputElement).val(formattedInitialValue);
+        }
+    }
+
+    // --- Select2 para Cliente de la Venta ---
+    $clienteSelect.select2({
+        placeholder: "Busca un cliente...",
+        language: "es",
+        minimumInputLength: 2,
+        ajax: {
+            url: "{% url 'ventas:buscar_clientes_ajax' %}",
+            dataType: 'json',
+            delay: 250,
+            data: params => ({ q: params.term }),
+            processResults: data => ({ results: data.results }),
+            cache: true
+        }
+    });
+
+    // Cargar selección inicial de Select2 (para edición o cliente_id pre-rellenado)
+    if ($clienteSelect.val()) {
+        const clienteId = $clienteSelect.val();
+        if (clienteId && !isNaN(clienteId)) {
+            $.ajax({
+                type: 'GET',
+                url: "{% url 'ventas:buscar_clientes_ajax' %}",
+                data: { id: clienteId }
+            }).then(function (data) {
+                if (data.results && data.results.length > 0) {
+                    const option = new Option(data.results[0].text, data.results[0].id, true, true);
+                    $clienteSelect.append(option).trigger('change');
+                }
+            });
+        }
+    }
+
+    // --- Lógica de Venta de Mostrador ---
+    $esVentaMostradorCheckbox.on('change', function() {
+        if ($(this).is(':checked')) {
+            $clienteSelect.val(null).trigger('change');
+            $clienteSelect.prop('disabled', true);
+            $esVentaMostradorHiddenInput.val('True');
+        } else {
+            $clienteSelect.prop('disabled', false);
+            $esVentaMostradorHiddenInput.val('False');
+        }
+    });
+
+    // --- Lógica del Modal para Añadir Nuevo Cliente ---
+    $addClientModal.on('shown.bs.modal', function() {
+        // Aplicar la máscara a los campos de teléfono del modal cuando se abre
+        $('#addClientModal').find('input[name="telefono"], input[name="telefono2"]').each(function() {
+            applyPhoneMask(this);
+        });
+        // También reinicia la validación de Bootstrap al abrir el modal
+        $addClientForm.removeClass('was-validated');
+        $addClientForm.find('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
+        $addClientForm.find('.invalid-feedback').remove(); // Limpiar divs de error si se habían creado
+    });
+
+    $addClientForm.on('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const formAction = $(this).attr('action');
+
+        // Limpiar mensajes de error previos de Crispy Forms en el modal
+        $addClientForm.find('.is-invalid').removeClass('is-invalid');
+        $addClientForm.find('.invalid-feedback').remove();
+        $addClientForm.find('.text-danger').text(''); // Limpiar errores manuales si los hubiera
+
+        fetch(formAction, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(({ status, body }) => {
+            if (status >= 200 && status < 300 && body.success) {
+                $toastTitle.text('Éxito');
+                $toastBody.text(body.message);
+                $toastElement.removeClass('bg-danger').addClass('bg-success text-white');
+                bsToast.show();
+                $addClientModal.modal('hide');
+
+                // Restablecer el formulario del modal
+                $addClientForm[0].reset();
+                $addClientForm.find('.is-valid').removeClass('is-valid');
+
+                // Seleccionar el nuevo cliente en el Select2 principal de la venta
+                const newOption = new Option(body.cliente_text, body.cliente_id, true, true);
+                $clienteSelect.append(newOption).trigger('change');
+                $clienteSelect.prop('disabled', false);
+                $esVentaMostradorCheckbox.prop('checked', false).trigger('change');
+
+            } else {
+                $toastTitle.text('Error');
+                $toastBody.text(body.error || 'Por favor, corrige los errores en el formulario del cliente.');
+                $toastElement.removeClass('bg-success').addClass('bg-danger text-white');
+                bsToast.show();
+
+                // Mostrar errores de validación de Crispy Forms en el modal
+                if (body.errors) {
+                    const errors = body.errors; // Ya es un objeto JSON parseado por la vista
+                    for (const fieldName in errors) {
+                        const errorMessages = errors[fieldName].join(', '); // Los errores son listas de strings
+                        const $fieldGroup = $addClientForm.find(`#div_id_${fieldName}`); // Div principal de crispy-forms para el campo
+                        
+                        // Añadir clase is-invalid al input (que Crispy Forms genera)
+                        $fieldGroup.find('input, select, textarea').addClass('is-invalid');
+
+                        // Crear o actualizar el div de feedback de error
+                        let $errorDiv = $fieldGroup.find('.invalid-feedback');
+                        if (!$errorDiv.length) {
+                            $errorDiv = $('<div class="invalid-feedback d-block"></div>'); // d-block para mostrar
+                            // Insertar después del control de formulario.
+                            $fieldGroup.find('.form-control').after($errorDiv); 
+                        }
+                        $errorDiv.text(errorMessages);
+                        $errorDiv.addClass('d-block'); // Asegurarse de que sea visible
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error AJAX al crear cliente:', error);
+            $toastTitle.text('Error de Conexión');
+            $toastBody.text('No se pudo comunicar con el servidor al crear el cliente.');
+            $toastElement.removeClass('bg-success').addClass('bg-danger text-white');
+            bsToast.show();
+        });
+    });
+
+    // --- Resto de tu lógica existente (productos, formset, totales, guardar/imprimir) ---
+
+    function updateRowSubtotal($row) {
+        const cantidad = parseFloat($row.find('input[name$="-cantidad"]').val()) || 0;
+        const precio = parseFloat($row.find('input[name$="-precio_unitario"]').val()) || 0;
+        $row.find('.subtotal-display').val('$' + (cantidad * precio).toFixed(2));
+    }
+
+    function updateFinalTotals() {
+        let totalVenta = 0;
+        $('.formset-row').each(function() {
+            const $row = $(this);
+            if (!$row.find('input[name$="-DELETE"]').is(':checked')) {
+                const cantidad = parseFloat($row.find('input[name$="-cantidad"]').val()) || 0;
+                const precio = parseFloat($row.find('input[name$="-precio_unitario"]').val()) || 0;
+                totalVenta += cantidad * precio;
+            }
+        });
+        $('#id_total_venta').val(totalVenta.toFixed(2));
+        const pagado = parseFloat($('#id_pagado').val()) || 0;
+        $('#id_cambio').val(pagado > totalVenta ? (pagado - totalVenta).toFixed(2) : '0.00');
+    }
+
+    function initializeSelect2ForRow($row) {
+        const $productSelect = $row.find('select[name$="-producto"]');
+        $productSelect.select2({
+            placeholder: "Busca un producto...",
+            language: "es",
+            ajax: {
+                url: "{% url 'ventas:buscar_productos_ajax' %}",
+                dataType: 'json',
+                delay: 250,
+                data: params => ({ q: params.term }),
+                processResults: data => ({ results: data.results })
+            }
+        }).on('select2:select', function(e) {
+            const data = e.params.data;
+            const $currentRow = $(this).closest('.formset-row');
+            if (data && data.precio_unitario) {
+                $currentRow.find('input[name$="-precio_unitario"]').val(data.precio_unitario).trigger('input');
+            }
+        });
+    }
+
+    $('#formset-container').on('input', 'input[name$="-cantidad"], input[name$="-precio_unitario"]', function() {
+        updateRowSubtotal($(this).closest('.formset-row'));
+        updateFinalTotals();
+    });
+
+    $('#id_pagado').on('input', updateFinalTotals);
+
+    $('#formset-container').on('click', '.remove-row', function() {
+        const $row = $(this).closest('.formset-row');
+        const deleteCheckbox = $row.find('input[id$="-DELETE"]');
+        if (deleteCheckbox.length) {
+            deleteCheckbox.prop('checked', true);
+            $row.hide();
+        } else {
+            $row.remove();
+        }
+        updateFinalTotals();
+    });
+
+    $('#add-item').click(function() {
+        const totalFormsInput = $('#id_detalles-TOTAL_FORMS');
+        const totalForms = parseInt(totalFormsInput.val());
+        const emptyFormHtml = $('#empty-form-template').html().replace(/__prefix__/g, totalForms);
+        const $newRow = $(emptyFormHtml);
+        $('#formset-container').append($newRow);
+        initializeSelect2ForRow($newRow);
+        totalFormsInput.val(totalForms + 1);
+    });
+
+    $('.formset-row').each(function() {
+        initializeSelect2ForRow($(this));
+        updateRowSubtotal($(this));
+    });
+    updateFinalTotals();
+
+    $('#venta-form').on('submit', function(event) {
+        if ("{{ titulo }}" === "Crear Nueva Venta") {
+            event.preventDefault();
+
+            // Sincronizar el estado del checkbox con el campo oculto
+            $esVentaMostradorHiddenInput.val($esVentaMostradorCheckbox.is(':checked') ? 'True' : 'False');
+
+            const formData = new FormData(this);
+            
+            const clickedButton = event.originalEvent.submitter;
+            const submitAndPrint = (clickedButton && clickedButton.id === 'btn-guardar-imprimir');
+            
+            if (submitAndPrint) {
+                formData.append('submit_and_print', 'true');
+            }
+
+            fetch("{% url 'ventas:crear_venta' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(({ status, body }) => {
+                if (status >= 200 && status < 300 && body.success) {
+                    $toastTitle.text('Éxito');
+                    $toastBody.text(body.message);
+                    $toastElement.removeClass('bg-danger').addClass('bg-success text-white');
+                    bsToast.show();
+
+                    if (body.print_url) {
+                        window.open(body.print_url, '_blank');
+                    }
+
+                    setTimeout(() => { 
+                        window.location.href = body.redirect_url; 
+                    }, 2000);
+
+                } else {
+                    $toastTitle.text('Error');
+                    $toastBody.text(body.error || 'Por favor, revisa los errores en el formulario de venta.');
+                    $toastElement.removeClass('bg-success').addClass('bg-danger text-white');
+                    bsToast.show();
+                    console.error('Errores del formulario de venta:', body.errors, body.formset_errors);
+                    
+                    // Limpiar errores previos en el formulario principal
+                    $ventaForm.find('.is-invalid').removeClass('is-invalid');
+                    $ventaForm.find('.invalid-feedback').remove();
+
+                    // Mostrar errores de VentaForm
+                    if (body.errors) {
+                        const formErrors = body.errors;
+                        for (const fieldName in formErrors) {
+                            const errorMessages = formErrors[fieldName].join(' ');
+                            const $fieldGroup = $ventaForm.find(`#div_id_${fieldName}`);
+                            $fieldGroup.find('input, select, textarea').addClass('is-invalid');
+                            let $errorDiv = $fieldGroup.find('.invalid-feedback');
+                            if (!$errorDiv.length) {
+                                $errorDiv = $('<div class="invalid-feedback d-block"></div>');
+                                $fieldGroup.find('.form-control').after($errorDiv);
+                            }
+                            $errorDiv.text(errorMessages);
+                        }
+                    }
+
+                    // Mostrar errores de Formset (esto puede ser más complejo si quieres errores por fila)
+                    if (body.formset_errors && body.formset_errors.length > 0) {
+                        console.error("Errores en formset:", body.formset_errors);
+                        if (!$ventaForm.find('.alert-danger.formset-global-error').length) {
+                            $ventaForm.prepend('<div class="alert alert-danger formset-global-error">Hay errores en los detalles de la venta. Por favor, revisa cada fila.</div>');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error AJAX general al guardar venta:', error);
+                $toastTitle.text('Error de Conexión');
+                $toastBody.text('No se pudo comunicar con el servidor al guardar la venta.');
+                $toastElement.removeClass('bg-success').addClass('bg-danger text-white');
+                bsToast.show();
+            });
+        }
+    });
+});
+</script>
+{% endblock extra_js %}
